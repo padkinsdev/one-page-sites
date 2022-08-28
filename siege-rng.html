@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Siege Operator Generator</title>
+    </head>
+    <body onload="generateOpToggleList()">
+        <style>
+            /* I promise that my CSS knowledge is more detailed than this page indicates. The page
+             is meant to be a utility rather than to look attractive */
+            .role {
+                width: 100%;
+                border-top: black 2px solid;
+                border-bottom: black 2px solid;
+                display: inline-flex;
+                align-content: center;
+                flex-direction: row;
+            }
+            .role p {
+                padding-left: 10px;
+                font-size: 20px;
+            }
+            .switch {
+                margin-top: 15px;
+                padding: 2px 2px;
+                width: 50px;
+                height: 30px;
+                border-radius: 17px;
+            }
+            .switch.off {
+                background-color: #c1c1c1;
+            }
+            .switch.on {
+                background-color: #0549d1;
+            }
+            .knob {
+                background-color: white;
+                height: 30px;
+                width: 30px;
+                border-radius: 50%;
+                transition: 500ms;
+            }
+            .knob.on {
+                transform: translateX(20px);
+            }
+            .op-toggle-list {
+                display: inline-flex;
+                flex-direction: row;
+                align-items: center;
+            }
+            .op-toggle-list label {
+                padding-right: 5px;
+            }
+            .op-toggle-list div {
+                padding: 10px 10px;
+            }
+            .toggle-section-head {
+                border-top: black 2px solid;
+                padding-top: 20px;
+                font-size: 20px;
+            }
+            .page-head {
+                font-size: 25px;
+            }
+        </style>
+
+        <p class="page-head">What Siege Operator Should I Play?</p>
+        <div class="role">
+            <!-- Hombrewed toggle switch -->
+            <div class="switch off" id="switch">
+                <div class="knob" id="knob" onclick="toggleSwitch()"></div>
+            </div>
+            <p id="role-text">Attacker</p>
+        </div>
+        <div>
+            <p id="op-name">Your operator:</p>
+            <button id="op-gen-button" onclick="generateOp()">Generate!</button>
+        </div>
+
+        <p class="toggle-section-head">Add or remove operators from the generator below</p>
+        <button id="toggle-all-on" onclick="toggleAllOps()">Toggle all operators</button><br>
+        <div id="op-toggle" class="op-toggle-list">
+            <div id="attacker-toggle"></div>
+            <div id="defender-toggle"></div>
+        </div>
+
+        <script>
+            /* A JS object containing each operator and their respective primary, secondary, and utility options*/
+            const OPS = {
+                "defense": {
+                    "smoke": {
+                        "primary": ["M590A1", "FMG-9"],
+                        "secondary": ["P226 MK 25", "SMG-11"],
+                        "utility": ["DEPLOYABLE SHIELD", "BARBED WIRE"]
+                    },
+                    "mute": {
+                        "primary": ["MP5K", "M590A1"],
+                        "secondary": ["P226 MK 25", "SMG-11"],
+                        "utility": ["BULLETPROOF CAMERA", "NITRO CELL"]
+                    },
+                    "castle": {
+                        "primary": ["UMP45", "M1014"],
+                        "secondary": ["5.7 USG", "SUPER SHORTY"],
+                        "utility": ["PROXIMITY ALARM", "IMPACT GRENADE"]
+                    },
+                    "pulse": {
+                        "primary": ["UMP45", "M1014"],
+                        "secondary": ["5.7 USG", "M45 MEUSOC"],
+                        "utility": ["BARBED WIRE", "NITRO CELL"]
+                    },
+                    "doc": {
+                        "primary": ["MP5", "P90", "SG-CQB"],
+                        "secondary": ["P9", "LFP586"],
+                        "utility": ["BULLETPROOF CAMERA", "BARBED WIRE"]
+                    },
+                    "rook": {
+                        "primary": ["MP5", "P90", "SG-CQB"],
+                        "secondary": ["P9", "LFP586"],
+                        "utility": ["PROXIMITY ALARM", "IMPACT GRENADE"]
+                    },
+                    "kapkan": {
+                        "primary": ["9X19VSN", "SASG-12"],
+                        "secondary": ["PMM", "GSH-18"],
+                        "utility": ["IMPACT GRENADE", "NITRO CELL"]
+                    },
+                    "tachanka": {
+                        "primary": ["DP279", "9X19VSN"],
+                        "secondary": ["PMM", "GSH-18"],
+                        "utility": ["BARBED WIRE", "PROXIMITY ALARM"]
+                    },
+                    "jager": {
+                        "primary": ["M870", "416-C CARBINE"],
+                        "secondary": ["P12"],
+                        "utility": ["BARBED WIRE", "BULLETPROOF CAMERA"]
+                    },
+                    "bandit": {
+                        "primary": ["MP7", "M870"],
+                        "secondary": ["P12"],
+                        "utility": ["BARBED WIRE", "NITRO CELL"]
+                    },
+                    "frost": {
+                        "primary": ["SUPER 90", "9MM C1"],
+                        "secondary": ["MK1 9MM", "ITA12S"],
+                        "utility": ["BULLETPROOF CAMERA", "DEPLOYABLE SHIELD"]
+                    },
+                    "valkyrie": {
+                        "primary": ["MPX", "SPAS-12"],
+                        "secondary": ["D-50"],
+                        "utility": ["IMPACT GRENADE", "NITRO CELL"]
+                    },
+                    "caveira": {
+                        "primary": ["M12", "SPAS-15"],
+                        "secondary": ["LUISON"],
+                        "utility": ["PROXIMITY ALARM", "IMPACT GRENADE"]
+                    },
+                    "echo": {
+                        "primary": ["MP5SD", "SUPERNOVA"],
+                        "secondary": ["P229", "BEARING 9"],
+                        "utility": ["IMPACT GRENADE", "DEPLOYABLE SHIELD"]
+                    },
+                    "mira": {
+                        "primary": ["VECTOR .45 ACP", "ITA12L"],
+                        "secondary": ["USP40", "ITA12S"],
+                        "utility": ["PROXIMITY ALARM", "NITRO CELL"]
+                    },
+                    "lesion": {
+                        "primary": ["SIX12 SD", "T-5 SMG"],
+                        "secondary": ["Q-929"],
+                        "utility": ["IMPACT GRENADE", "BULLETPROOF CAMERA"]
+                    },
+                    "ela": {
+                        "primary": ["SCORPION EVO 3 A1", "FO-12"],
+                        "secondary": ["RG15"],
+                        "utility": ["BARBED WIRE", "DEPLOYABLE SHIELD"]
+                    },
+                    "vigil": {
+                        "primary": ["K1A", "BOSG.12.2"],
+                        "secondary": ["C75 AUTO", "SMG-12"],
+                        "utility": ["BULLETPROOF CAMERA", "IMPACT GRENADE"]
+                    },
+                    "maestro": {
+                        "primary": ["ALDA 5.56", "ACS12"],
+                        "secondary": ["KERATOS .357", "BAILIFF 410"],
+                        "utility": ["BARBED WIRE", "IMPACT GRENADE"]
+                    },
+                    "alibi": {
+                        "primary": ["MX4 STORM", "ACS12"],
+                        "secondary": ["KERATOS .357", "BAILIFF 410"],
+                        "utility": ["IMPACT GRENADE", "DEPLOYABLE SHIELD"]
+                    },
+                    "clash": {
+                        "primary": ["CCE SHIELD"],
+                        "secondary": ["SUPER SHORTY", "SPSMG9"],
+                        "utility": ["BARBED WIRE", "IMPACT GRENADE"]
+                    },
+                    "kaid": {
+                        "primary": ["AUG A3", "TCSG12"],
+                        "secondary": [".44 MAG SEMI-AUTO", "LFP586"],
+                        "utility": ["BARBED WIRE", "NITRO CELL"]
+                    },
+                    "mozzie": {
+                        "primary": ["COMMANDO 9", "P10 RONI"],
+                        "secondary": ["SDP 9MM"],
+                        "utility": ["BARBED WIRE", "NITRO CELL"]
+                    },
+                    "warden": {
+                        "primary": ["M590A1", "MPX"],
+                        "secondary": ["P-10C", "SMG-12"],
+                        "utility": ["DEPLOYABLE SHIELD", "NITRO CELL"]
+                    },
+                    "goyo": {
+                        "primary": ["VECTOR .45 ACP", "TCSG12"],
+                        "secondary": ["P229"],
+                        "utility": ["PROXIMITY ALARM", "NITRO CELL"]
+                    },
+                    "wamai": {
+                        "primary": ["AUG A2", "MP5K"],
+                        "secondary": ["D-50", "P12"],
+                        "utility": ["PROXIMITY ALARM", "IMPACT GRENADE"]
+                    },
+                    "oryx": {
+                        "primary": ["SPAS-12", "T-5 SMG"],
+                        "secondary": ["BAILIFF 410", "USP40"],
+                        "utility": ["BARBED WIRE", "PROXIMITY ALARM"]
+                    },
+                    "melusi": {
+                        "primary": ["MP5", "SUPER 90"],
+                        "secondary": ["RG15"],
+                        "utility": ["IMPACT GRENADE", "NITRO CELL"]
+                    },
+                    "aruni": {
+                        "primary": ["P10 RONI", "MK 14 EBR"],
+                        "secondary": ["PRB92"],
+                        "utility": ["BULLETPROOF CAMERA", "BARBED WIRE"]
+                    },
+                    "thunderbird": {
+                        "primary": ["SPEAR .308", "SPAS--15"],
+                        "secondary": ["BEARING 9", "Q-929"],
+                        "utility": ["IMPACT GRENADE", "NITRO CELL"]
+                    },
+                    "thorn": {
+                        "primary": ["UZK50GI", "M870"],
+                        "secondary": ["1911 TACOPS", "C75 AUTO"],
+                        "utility": ["DEPLOYABLE SHIELD", "BARBED WIRE"]
+                    },
+                    "azami": {
+                        "primary": ["9X19SVN", "ACS12"],
+                        "secondary": ["D-50"],
+                        "utility": ["IMPACT GRENADE", "BARBED WIRE"]
+                    }
+                },
+                "offense": {
+                    "sledge": {
+                        "primary": ["L85A2", "M590A1"],
+                        "secondary": ["P226 MK 25", "SMG-11"],
+                        "utility": ["FRAG GRENADE", "STUN GRENADE"]
+                    },
+                    "thatcher": {
+                        "primary": ["AR33", "L85A2", "M590A1"],
+                        "secondary": ["P226 MK 25"],
+                        "utility": ["SOFT BREACH CHARGE", "CLAYMORE"]
+                    },
+                    "ash": {
+                        "primary": ["G36C", "R4-C"],
+                        "secondary": ["5.7 USG", "M45 MEUSOC"],
+                        "utility": ["SOFT BREACH CHARGE", "CLAYMORE"]
+                    },
+                    "thermite": {
+                        "primary": ["M1014", "556XI"],
+                        "secondary": ["5.7 USG", "M45 MEUSOC"],
+                        "utility": ["SMOKE GRENADE", "STUN GRENADE"]
+                    },
+                    "twitch": {
+                        "primary": ["F2", "417", "SG-CQB"],
+                        "secondary": ["P9", "LFP586"],
+                        "utility": ["SMOKE GRENADE", "CLAYMORE"]
+                    },
+                    "montagne": {
+                        "primary": ["LE ROC SHIELD"],
+                        "secondary": ["P9", "LFP586"],
+                        "utility": ["SMOKE GRENADE", "HARD BREACH CHARGE"]
+                    },
+                    "glaz": {
+                        "primary": ["OTS-03"],
+                        "secondary": ["PMM", "GONNE-6", "BEARING 9"],
+                        "utility": ["SMOKE GRENADE", "FRAG GRENADE"]
+                    },
+                    "fuze": {
+                        "primary": ["AK-12", "6P41", "BALLISTIC SHIELD"],
+                        "secondary": ["PMM", "GSH-18"],
+                        "utility": ["SOFT BREACH CHARGE", "HARD BREACH CHARGE"]
+                    },
+                    "blitz": {
+                        "primary": ["G-52 TACTICAL SHIELD"],
+                        "secondary": ["P12"],
+                        "utility": ["SMOKE GRENADE", "SOFT BREACH CHARGE"]
+                    },
+                    "iq": {
+                        "primary": ["AUG A2", "552 COMMANDO", "G8A1"],
+                        "secondary": ["P12"],
+                        "utility": ["SOFT BREACH CHARGE", "CLAYMORE"]
+                    },
+                    "buck": {
+                        "primary": ["C8-SFW", "CAMRS"],
+                        "secondary": ["MK1 9MM"],
+                        "utility": ["STUN GRENADE", "HARD BREACH CHARGE"]
+                    },
+                    "blackbeard": {
+                        "primary": ["MK17 CQB", "SR-25"],
+                        "secondary": ["D-50"],
+                        "utility": ["CLAYMORE", "STUN GRENADE"]
+                    },
+                    "capitao": {
+                        "primary": ["PARA-308", "M249"],
+                        "secondary": ["PRB92"],
+                        "utility": ["CLAYMORE", "HARD BREACH CHARGE"]
+                    },
+                    "hibana": {
+                        "primary": ["TYPE-89", "SUPERNOVA"],
+                        "secondary": ["P229", "BEARING 9"],
+                        "utility": ["STUN GRENADE", "SOFT BREACH CHARGE"]
+                    },
+                    "jackal": {
+                        "primary": ["C7E", "PDW9", "ITA12L"],
+                        "secondary": ["USP40", "ITA12S"],
+                        "utility": ["CLAYMORE", "SMOKE GRENADE"]
+                    },
+                    "ying": {
+                        "primary": ["T-95 LSW", "SIX12"],
+                        "secondary": ["Q-929"],
+                        "utility": ["HARD BREACH CHARGE", "SMOKE GRENADE"]
+                    },
+                    "zofia": {
+                        "primary": ["LMG-E", "M762"],
+                        "secondary": ["RG15"],
+                        "utility": ["SOFT BREACH CHARGE", "CLAYMORE"]
+                    },
+                    "dokkaebi": {
+                        "primary": ["MK 14 EBR", "BOSG.12.2"],
+                        "secondary": ["GONNE-6", "SMG-12", "C75 AUTO"],
+                        "utility": ["SMOKE GRENADE", "STUN GRENADE"]
+                    },
+                    "lion": {
+                        "primary": ["V308", "417", "SG-CQB"],
+                        "secondary": ["GONNE-6", "LFP586"],
+                        "utility": ["STUN GRENADE", "CLAYMORE"]
+                    },
+                    "finka": {
+                        "primary": ["SPEAR .308", "6P41", "SASG-12"],
+                        "secondary": ["PMM", "GONNE-6"],
+                        "utility": ["STUN GRENADE", "FRAG GRENADE"]
+                    },
+                    "maverick": {
+                        "primary": ["AR-15.50", "M4 GS"],
+                        "secondary": ["1911 TACOPS"],
+                        "utility": ["FRAG GRENADE", "CLAYMORE"]
+                    },
+                    "nomad": {
+                        "primary": ["ARX200", "AK-74M"],
+                        "secondary": ["PRB92", ".44 MAG SEMI-AUTO"],
+                        "utility": ["SOFT BREACH CHARGE", "STUN GRENADE"]
+                    },
+                    "gridlock": {
+                        "primary": ["F90", "M249 SAW"],
+                        "secondary": ["SUPER SHORTY", "GONNE-6", "SDP 9MM"],
+                        "utility": ["SMOKE GRENADE", "SOFT BREACH CHARGE"]
+                    },
+                    "nokk": {
+                        "primary": ["FMG-9", "SIX12 SD"],
+                        "secondary": ["5.7 USG", "D-50"],
+                        "utility": ["FRAG GRENADE", "HARD BREACH CHARGE"]
+                    },
+                    "amaru": {
+                        "primary": ["G8A1", "SUPERNOVA"],
+                        "secondary": ["GONNE-6", "SMG-11"],
+                        "utility": ["STUN GRENADE", "HARD BREACH CHARGE"]
+                    },
+                    "kali": {
+                        "primary": ["CSRX 300"],
+                        "secondary": ["SPSMG9", "C75 AUTO"],
+                        "utility": ["SOFT BREACH CHARGE", "CLAYMORE"]
+                    },
+                    "iana": {
+                        "primary": ["G36C", "ARX200"],
+                        "secondary": ["MK1 9MM", "GONNE-6"],
+                        "utility": ["FRAG GRENADE", "SMOKE GRENADE"]
+                    },
+                    "ace": {
+                        "primary": ["AK-12", "M1014"],
+                        "secondary": ["P9"],
+                        "utility": ["SOFT BREACH CHARGE", "CLAYMORE"]
+                    },
+                    "zero": {
+                        "primary": ["MP7", "SC3000K"],
+                        "secondary": ["5.7 USG", "GONNE-6"],
+                        "utility": ["HARD BREACH CHARGE", "'CLAYMORE"]
+                    },
+                    "flores": {
+                        "primary": ["AR33", "SR-25"],
+                        "secondary": ["GSH-18"],
+                        "utility": ["STUN GRENADE", "CLAYMORE"]
+                    },
+                    "osa": {
+                        "primary": ["556XI", "PDW9"],
+                        "secondary": ["PMM"],
+                        "utility": ["SMOKE GRENADE", "CLAYMORE"]
+                    },
+                    "sens": {
+                        "primary": ["POF9", "417"],
+                        "secondary": ["SDP 9MM", "GONNE-6"],
+                        "utility": ["HARD BREACH CHARGE", "CLAYMORE"]
+                    }
+                }
+            }
+            let activeOps = {
+                "defense": [],
+                "offense": []
+            };
+
+            /* Toggle the attacker/defender switch. The "correct" way to implement a slider switch involves using a checkbox,
+             but I wanted to see what I could come up with */
+            function toggleSwitch() {
+                let switchEl = document.getElementById("switch");
+                let knob = document.getElementById("knob");
+                if (switchEl.classList.contains("on")) {
+                    document.getElementById("role-text").innerText = "Attacker";
+                    switchEl.classList.remove("on");
+                    switchEl.classList.add("off");
+                    knob.classList.remove("on");
+                } else {
+                    document.getElementById("role-text").innerText = "Defender";
+                    switchEl.classList.remove("off");
+                    switchEl.classList.add("on");
+                    knob.classList.add("on");
+                }
+            }
+
+            /* Operator names are lowercase in the OPS const for convention and simplicity. However, when printing the
+             operator name out to the user, the first letter should be capitalized */
+            function makeProperNoun(word) {
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }
+
+            /* Iterate through OPS to get each attacking and defending operator and create a label and checkbox entry 
+             to allow the user to add or remove a given operator from the possibilities that can be generated */
+            function generateOpToggleList() {
+                let attackerCol = document.getElementById("attacker-toggle");
+                let defenderCol = document.getElementById("defender-toggle");
+                Object.keys(OPS["offense"]).forEach((val) => {
+                    let newLabel = document.createElement("label");
+                    newLabel.setAttribute("for", val);
+                    newLabel.innerText = makeProperNoun(val);
+                    let newCheckbox = document.createElement("input");
+                    [["id", val], ["type", "checkbox"], ["onclick", `toggleOperator("${val}")`]].forEach((pair) => {
+                        newCheckbox.setAttribute(pair[0], pair[1]);
+                    });
+                    attackerCol.appendChild(newLabel);
+                    attackerCol.appendChild(newCheckbox);
+                    attackerCol.appendChild(document.createElement("br"));
+                });
+                Object.keys(OPS["defense"]).forEach((val) => {
+                    let newLabel = document.createElement("label");
+                    newLabel.setAttribute("for", val);
+                    newLabel.innerText = makeProperNoun(val);
+                    let newCheckbox = document.createElement("input");
+                    [["id", val], ["type", "checkbox"], ["onclick", `toggleOperator("${val}")`]].forEach((pair) => {
+                        newCheckbox.setAttribute(pair[0], pair[1]);
+                    });
+                    defenderCol.appendChild(newLabel);
+                    defenderCol.appendChild(newCheckbox);
+                    defenderCol.appendChild(document.createElement("br"));
+                });
+            }
+
+            /* Find and remove an operator by name from the list of operators that can be chosen */
+            function removeFromArray(array, item) {
+                array.splice(array.indexOf(item), 1);
+            }
+
+            /* Action event cbound to the checking/unchecking of the checkbox for an operator */
+            function toggleOperator(opName) {
+                let isAttacker = Object.keys(OPS["offense"]).includes(opName);
+                if (!document.getElementById(opName).checked) {
+                    if (isAttacker) {
+                        removeFromArray(activeOps["offense"], opName);
+                    } else {
+                        removeFromArray(activeOps["defense"], opName);
+                    }
+                } else {
+                    if (isAttacker) {
+                        activeOps["offense"].push(opName);
+                    } else {
+                        activeOps["defense"].push(opName);
+                    }
+                }
+            }
+
+            /* Self-explanatory. Grabs a random element from an array that is passed in and returns it */
+            function getRandomElement(array) {
+                return array[Math.floor(Math.random()*array.length)];
+            }
+
+            /* Grab a random operator from the list of possible operators and create a random loadout for it */
+            function generateOp() {
+                if (document.getElementById("role-text").innerText == "Attacker") {
+                    if (activeOps["offense"].length < 1) {
+                        document.getElementById("op-name").innerText = "You have no attacking operators selected!";
+                    } else {
+                        let op = getRandomElement(activeOps["offense"]);
+                        document.getElementById("op-name").innerText = `Your operator is ${makeProperNoun(op)} with primary ${getRandomElement(OPS["offense"][op]["primary"])}, secondary ${getRandomElement(OPS["offense"][op]["secondary"])}, and utility ${getRandomElement(OPS["offense"][op]["utility"])}`;
+                    }
+                } else {
+                    if (activeOps["defense"].length < 1) {
+                        document.getElementById("op-name").innerText = "You have no defending operators selected!";
+                    } else {
+                        let op = getRandomElement(activeOps["defense"]);
+                        document.getElementById("op-name").innerText = `Your operator is ${makeProperNoun(op)} with primary ${getRandomElement(OPS["defense"][op]["primary"])}, secondary ${getRandomElement(OPS["defense"][op]["secondary"])}, and utility ${getRandomElement(OPS["defense"][op]["utility"])}`;
+                    }
+                }
+            }
+
+            /* Iterates through each attacker and defender checkbox input and inverts its current state. Useful for
+             adding and removing operators in bulk */
+            function toggleAllOps() {
+                Array.from(document.getElementById("attacker-toggle").childNodes).forEach((el) => {
+                    if (el.tagName == "INPUT") {
+                        el.checked = !el.checked;
+                        toggleOperator(el.id);
+                    }
+                });
+                Array.from(document.getElementById("defender-toggle").childNodes).forEach((el) => {
+                    if (el.tagName == "INPUT") {
+                        el.checked = !el.checked;
+                        toggleOperator(el.id);
+                    }
+                });
+            }
+        </script>
+    </body>
+</html>
